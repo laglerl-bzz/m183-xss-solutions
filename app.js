@@ -4,19 +4,19 @@ const app = express();
 const port = 3000;
 
 // Security middleware
-const helmet = require('helmet');
-const xss = require('xss');
+const helmet = require('helmet'); // Helmet is used to set various HTTP headers to secure the app
 
 // Setup security headers
-app.use(helmet());
+app.use(helmet()); // Adds security headers to prevent common attacks, including XSS
 
 // Setup body parser
-app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.urlencoded({ extended: false })); // Parses incoming request bodies
 
 let comments = [];
 
 // XSS filter function
 function escapeHtml(unsafe) {
+  // Escapes special characters to prevent XSS attacks
   return unsafe
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
@@ -26,6 +26,7 @@ function escapeHtml(unsafe) {
 }
 
 app.get('/', (req, res) => {
+  // No user input is displayed here, so no XSS risk
   res.send(`
     <h1>XSS Demo - Secured Version</h1>
     <ul>
@@ -37,7 +38,7 @@ app.get('/', (req, res) => {
 });
 
 app.get('/stored', (req, res) => {
-  // Escape all comments before displaying
+  // Escapes all comments before displaying them to prevent stored XSS
   let commentsList = comments.map(comment =>
       `<li>${escapeHtml(comment.content)}</li>`
   ).join('');
@@ -54,7 +55,7 @@ app.get('/stored', (req, res) => {
 });
 
 app.post('/stored', (req, res) => {
-  // Sanitize input before storing
+  // Sanitizes user input before storing it to prevent stored XSS
   const sanitizedComment = escapeHtml(req.body.comment);
   comments.push({ content: sanitizedComment });
   res.redirect('/stored');
@@ -63,7 +64,7 @@ app.post('/stored', (req, res) => {
 app.get('/search', (req, res) => {
   const query = req.query.q || '';
 
-  // Escape the search query before displaying
+  // Escapes the search query before displaying it to prevent reflected XSS
   res.send(`
     <h1>Search</h1>
     <form>
@@ -86,7 +87,7 @@ app.get('/dom', (req, res) => {
 
     <script>
         document.getElementById("submitBU").addEventListener("click", function() {
-            // Use textContent instead of innerHTML to prevent XSS
+            // Uses textContent instead of innerHTML to prevent DOM-based XSS
             const userInput = document.getElementById("inputField").value;
             document.getElementById("output").textContent = userInput;
             
